@@ -1,0 +1,80 @@
+<!doctype html>
+{# Base layout with bilingual placeholders and a safe fallback t() macro #}
+{% set lang_code = 'fr' if request.query_params.get('lang') == 'fr' else 'en' %}
+{% set T = {
+  'en': {
+    'app_title': 'QR Support',
+    'nav_home': 'Home',
+    'nav_admin': 'Admin',
+    'language': 'Language',
+    'english': 'English',
+    'french': 'Français',
+    'footer': '© QR Support App'
+  },
+  'fr': {
+    'app_title': 'Support QR',
+    'nav_home': 'Accueil',
+    'nav_admin': 'Admin',
+    'language': 'Langue',
+    'english': 'English',
+    'french': 'Français',
+    'footer': '© Application Support QR'
+  }
+} %}
+{% if t is not defined %}
+  {% macro t(key) -%}
+    {{ T[lang_code].get(key, key) }}
+  {%- endmacro %}
+{% endif %}
+
+<html lang="{{ 'fr' if lang_code == 'fr' else 'en' }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ t('app_title') }}{% endblock %}</title>
+  {% block styles %}
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    header,footer{background:var(--card)}
+    .container{max-width:1000px;margin:0 auto;padding:1rem}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+    a{color:var(--accent);text-decoration:none}
+    nav a{margin-right:1rem}
+    .lang a{margin-left:.5rem}
+    .card{background:var(--card);border-radius:12px;padding:1rem;margin-top:1rem}
+    .muted{color:var(--muted)}
+  </style>
+  {% endblock %}
+</head>
+<body>
+  <header>
+    <div class="container row">
+      <div><strong>{{ t('app_title') }}</strong></div>
+      <nav>
+        <!-- Home points to the public form for now -->
+        <a href="/public/form?lang={{ lang_code }}">{{ t('nav_home') }}</a>
+        {% block admin_nav %}{% endblock %}
+      </nav>
+      <div class="lang muted">
+        {{ t('language') }}:
+        <a href="{{ request.url.path }}?lang=en">EN</a> |
+        <a href="{{ request.url.path }}?lang=fr">FR</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% include "_flash.html" ignore missing %}
+    <div class="card">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer>
+    <div class="container muted">{{ t('footer') }}</div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

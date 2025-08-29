@@ -1,0 +1,27 @@
+{# Alerts partial without inline Jinja-in-CSS to satisfy the linter #}
+{% set LEVELS = {
+  "success": {"label_en":"Success","label_fr":"Succès"},
+  "info":    {"label_en":"Info","label_fr":"Info"},
+  "warning": {"label_en":"Warning","label_fr":"Avertissement"},
+  "error":   {"label_en":"Error","label_fr":"Erreur"}
+} %}
+
+{% if messages %}
+  <style>
+    .alert{border-radius:10px;padding:.75rem 1rem;border:1px solid #334155;color:#e5e7eb;margin:0 0 .5rem 0}
+    .alert.success{background:#0a3622}
+    .alert.warning{background:#3b2f0b}
+    .alert.error{background:#3b0a0a}
+    .alert.info{background:#111827}
+  </style>
+
+  <div role="region" aria-label="notifications">
+    {% for m in messages %}
+      {% set lvl = m.level if m.level in LEVELS else 'info' %}
+      <div class="alert {{ lvl }}">
+        <strong>{{ LEVELS[lvl]['label_fr'] if lang_code=='fr' else LEVELS[lvl]['label_en'] }}:</strong>
+        <span> {{ m.text }} </span>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block admin_nav %}
+  <a href="#">{{ t('nav_admin') }}</a>
+{% endblock %}
+
+
+{% block title %}{{ t('app_title') }} · Admin{% endblock %}
+
+{% block content %}
+  <h1 style="margin:0 0 .5rem 0">Admin</h1>
+  <p class="muted">
+    {{ 'Espace administrateur' if lang_code == 'fr' else 'Administrator area' }}
+  </p>
+
+  {# Placeholder admin nav — links become real later #}
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0">
+    <a href="#" class="muted">Machines</a>
+    <a href="#" class="muted">QR Generator</a>
+    <a href="#" class="muted">Tickets</a>
+    <a href="#" class="muted">Exports</a>
+  </div>
+
+  {% block admin_content %}{% endblock %}
+{% endblock %}

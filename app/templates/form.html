@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('app_title') }} · {{ 'Formulaire' if lang_code=='fr' else 'Form' }}{% endblock %}
+
+{% block content %}
+  {% set labels = {
+    'en': {
+      'heading': 'Support Request',
+      'intro': 'Scan came from a machine QR. Some fields may already be filled in.',
+      'machine_serial': 'Machine Serial',
+      'machine_type': 'Machine Type',
+      'issue_summary': 'Issue Summary',
+      'issue_details': 'Details (steps, errors, photos link)',
+      'contact_email': 'Your email (for updates)',
+      'submit': 'Submit Ticket',
+      'required': 'required',
+    },
+    'fr': {
+      'heading': 'Demande de support',
+      'intro': 'La demande provient d’un code QR sur la machine. Certains champs peuvent être déjà remplis.',
+      'machine_serial': 'Numéro de série',
+      'machine_type': 'Type de machine',
+      'issue_summary': 'Résumé du problème',
+      'issue_details': 'Détails (étapes, erreurs, lien photos)',
+      'contact_email': 'Votre courriel (pour le suivi)',
+      'submit': 'Soumettre le billet',
+      'required': 'obligatoire',
+    }
+  } %}
+  {% set L = labels[lang_code] %}
+
+  <h1 style="margin:0 0 .5rem 0">{{ L.heading }}</h1>
+  <p class="muted" style="margin:0 0 1rem 0">{{ L.intro }}</p>
+
+<form method="post" action="{{ request.url.path }}">
+  {# CSRF placeholder — wire later #}
+  {# <input type="hidden" name="csrf_token" value="{{ csrf_token }}"> #}
+
+  {% set labels = {
+    'en': {
+      'heading': 'Support Request',
+      'intro': 'Scan came from a machine QR. Fields below are prefilled.',
+      'machine_serial': 'Machine Serial',
+      'machine_type': 'Machine Type',
+      'operator_name': 'Your name',
+      'operator_phone': 'Your phone number',
+      'issue_summary': 'Issue Summary',
+      'issue_details': 'Details (steps, errors, link to photos)',
+      'submit': 'Submit Ticket',
+      'required': 'required'
+    },
+    'fr': {
+      'heading': 'Demande de support',
+      'intro': 'La demande provient d’un code QR. Les champs ci-dessous sont préremplis.',
+      'machine_serial': 'Numéro de série',
+      'machine_type': 'Type de machine',
+      'operator_name': 'Votre nom',
+      'operator_phone': 'Votre numéro de téléphone',
+      'issue_summary': 'Résumé du problème',
+      'issue_details': 'Détails (étapes, erreurs, lien vers photos)',
+      'submit': 'Soumettre le billet',
+      'required': 'obligatoire'
+    }
+  } %}
+  {% set L = labels[lang_code] %}
+
+  <div style="display:grid;gap:.75rem">
+
+    {# READ-ONLY prefilled from QR/query params #}
+    <label>
+      <div>{{ L.machine_serial }}</div>
+      <input name="machine_serial"
+             value="{{ machine_serial or request.query_params.get('sn','') }}"
+             readonly aria-readonly="true"
+             style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #334155;background:#091022;color:#e5e7eb">
+    </label>
+
+    <label>
+      <div>{{ L.machine_type }}</div>
+      <input name="machine_type"
+             value="{{ machine_type or request.query_params.get('type','') }}"
+             readonly aria-readonly="true"
+             style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #334155;background:#091022;color:#e5e7eb">
+    </label>
+
+    {# Operator inputs #}
+    <label>
+      <div>{{ L.operator_name }} <span class="muted">({{ L.required }})</span></div>
+      <input name="operator_name"
+             value="{{ operator_name or '' }}"
+             required
+             style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e5e7eb">
+    </label>
+
+    <label>
+      <div>{{ L.operator_phone }} <span class="muted">({{ L.required }})</span></div>
+      <input name="operator_phone" type="tel"
+             value="{{ operator_phone or '' }}"
+             required
+             style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e5e7eb">
+    </label>
+
+    <label>
+  <div>{{ L.issue_summary }} <span class="muted">({{ L.required }})</span></div>
+  <textarea name="summary" rows="5" maxlength="255" required
+            style="width:100%;padding:.5rem;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e5e7eb">{{ summary or '' }}</textarea>
+</label>
+
+
+    {# Honeypot anti-bot field #}
+    <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+      <label>Leave this blank
+        <input type="text" name="website" value="">
+      </label>
+    </div>
+
+    <div>
+      <button type="submit"
+              style="padding:.6rem 1rem;border-radius:10px;border:1px solid #22d3ee;background:#0b1220;color:#e5e7eb;cursor:pointer">
+        {{ L.submit }}
+      </button>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
