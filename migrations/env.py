@@ -1,13 +1,13 @@
 import os
 from logging.config import fileConfig
-
+from app import models
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from dotenv import load_dotenv
 
 # --- Load DATABASE_URL from .env ---
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./dev.db"
 
 # Alembic Config object (reads alembic.ini)
 config = context.config
@@ -23,7 +23,7 @@ if config.config_file_name is not None:
 # Metadata for autogenerate (we'll set this after we define models)
 # from app import models
 # target_metadata = models.Base.metadata
-target_metadata = None
+target_metadata = models.Base.metadata
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
