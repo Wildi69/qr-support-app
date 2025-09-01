@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Request, Form
+from typing import List, Dict, Optional
+
+from fastapi import APIRouter, Request, Form, Depends
 from fastapi.templating import Jinja2Templates
-from typing import List, Dict
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app import models
 
 public_router = APIRouter(tags=["public"])
 
@@ -28,18 +33,19 @@ def submit_form(
     operator_phone: str = Form(""),
     summary: str = Form(""),
     website: str = Form(""),  # honeypot; must be empty
+    db: Session = Depends(get_db),
 ):
     """
-    Basic validation only (no DB yet):
+    Basic validation + DB insert:
     - required: operator_name, operator_phone, summary
     - summary <= 255 chars
     - honeypot 'website' must be empty
-    - machine_serial/type are passed through (read-only on the form)
+    - optional machine_serial/type: link ticket to an existing machine or create it
     """
     messages: List[Dict[str, str]] = []
     lang = request.query_params.get("lang", "en")
 
-    # Simple validators
+    # --- Validation ---
     if website.strip():
         messages.append(
             {"level": "error", "text": "Bot submission blocked." if lang == "en" else "Soumission automatisée bloquée."}
@@ -77,7 +83,49 @@ def submit_form(
             status_code=400,
         )
 
-    # Success (no DB yet) – show confirmation and clear operator fields
+    # --- Find-or-create Machine (optional) ---
+    machine_id: Optional[int] = None
+    if machine_serial.strip() and machine_type.strip():
+        existing = (
+            db.query(models.Machine)
+            .filter(models.Machine.serial == machine_serial.strip())
+            .one_or_none()
+        )
+        if existing:
+            machine = existing
+        else:
+            machine = models.Machine(serial=machine_serial.strip(), type=machine_type.strip())
+            db.add(machine)
+            db.flush()  # get machine.id without full commit
+        machine_id = machine.id
+
+    # --- Create Ticket ---
+    ticket = models.Ticket(
+        machine_id=machine_id,
+        operator_name=operator_name.strip(),
+        operator_phone=operator_phone.strip(),
+        summary=summary.strip(),
+        status=models.TicketStatus.new,
+    )
+    db.add(ticket)
+    db.flush()  # ensure ticket.id is available
+
+    # --- Audit event (link directly to the new ticket) ---
+    audit = models.AuditEvent(
+        actor="public:operator",
+        action="ticket.create",
+        entity_type="ticket",
+        entity_id=ticket.id,  # <-- set here, no raw SQL
+        meta={
+            "machine_serial": machine_serial.strip() or None,
+            "machine_type": machine_type.strip() or None,
+        },
+    )
+    db.add(audit)
+
+    db.commit()
+
+    # --- Success response ---
     messages.append(
         {"level": "success", "text": "Ticket submitted. Thank you!" if lang == "en" else "Billet soumis. Merci!"}
     )
@@ -86,7 +134,7 @@ def submit_form(
         {
             "request": request,
             "messages": messages,
-            "machine_serial": machine_serial,
+            "machine_serial": machine_serial,  # keep these visible for operator
             "machine_type": machine_type,
             # Clear operator fields after success
             "operator_name": "",
