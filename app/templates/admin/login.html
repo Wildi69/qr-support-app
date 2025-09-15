@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+
+{% block page_styles %}
+<style>
+  .auth-wrap{max-width:720px;margin:0 auto}
+  .title{margin:0 0 1rem 0;font-size:2.2rem;line-height:1.2}
+  .actions{margin-top:1rem}
+  .btn{padding:.6rem 1.1rem;border:none;border-radius:12px;background:var(--accent);color:#001118;font-weight:700;cursor:pointer}
+  input{width:100%;padding:.9rem;border-radius:12px;border:1px solid #283241;background:#0b1324;color:var(--ink)}
+  label{display:block;margin:.6rem 0 .25rem 0}
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="auth-wrap">
+    <h1 class="title">{{ tr('signin') }}</h1>
+
+    <form method="post" action="/admin/login" novalidate>
+      <input type="hidden" name="_csrf" value="{{ prelogin_csrf or '' }}" />
+
+      <label for="email">{{ tr('email') }}</label>
+      <input
+        id="email"
+        type="email"
+        name="username"
+        autocomplete="username"
+        placeholder="{{ tr('email') }}"
+        required
+      />
+
+      <label for="password">{{ tr('password') }}</label>
+      <input
+        id="password"
+        type="password"
+        name="password"
+        autocomplete="current-password"
+        placeholder="{{ tr('password') }}"
+        required
+      />
+
+      <div class="actions">
+        <button class="btn" type="submit">{{ tr('button_signin') }}</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

@@ -1,20 +1,26 @@
+{# app/templates/admin/_flash.html #}
 {% set lang_code = 'fr' if request.query_params.get('lang') == 'fr' else 'en' %}
+
+{# Message catalog keyed by the short codes we pass from Python #}
 {% set M = {
   'en': {
     'invalid_credentials': 'Invalid credentials.',
     'invalid_session': 'Invalid session. Please retry.',
-    'too_many_attempts': 'Too many attempts. Please try again shortly.'
+    'too_many_attempts': 'Too many attempts. Please try again shortly.',
+    'invalid_request': 'Invalid request.'
   },
   'fr': {
     'invalid_credentials': 'Identifiants invalides.',
     'invalid_session': 'Session invalide. Veuillez réessayer.',
-    'too_many_attempts': 'Trop d’essais. Réessayez sous peu.'
+    'too_many_attempts': 'Trop d’essais. Réessayez sous peu.',
+    'invalid_request': 'Requête invalide.'
   }
 } %}
 
 {% if messages and messages|length > 0 %}
   <div class="flash">
     {% for m in messages %}
+      {# If m.text is a key we translate; otherwise we show it verbatim #}
       {% set txt = M[lang_code].get(m.text, m.text) %}
       <div class="flash-item flash-{{ m.level }}">{{ txt }}</div>
     {% endfor %}

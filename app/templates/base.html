@@ -34,6 +34,18 @@
   <title>{% block title %}{{ t('app_title') }}{% endblock %}</title>
   {% block styles %}
   <style>
+    .flash { margin-bottom:1rem; }
+    .flash-item {
+      padding:0.8rem 1rem;
+      border-radius:8px;
+      margin:0.5rem 0;
+      font-weight:600;
+    }
+    .flash-success { background:#d1fae5; color:#065f46; border:1px solid #10b981; }
+    .flash-error   { background:#fee2e2; color:#991b1b; border:1px solid #ef4444; }
+    .flash-info    { background:#e0f2fe; color:#1e3a8a; border:1px solid #3b82f6; }
+    .flash-warning { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
+
     :root { --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; }
     *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:var(--bg);color:var(--ink)}
     header,footer{background:var(--card)}
@@ -44,6 +56,7 @@
     .lang a{margin-left:.5rem}
     .card{background:var(--card);border-radius:12px;padding:1rem;margin-top:1rem}
     .muted{color:var(--muted)}
+    
   </style>
   {% endblock %}
 </head>

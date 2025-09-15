@@ -1,22 +1,2 @@
-# Python / venv
-venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
-.dev.db
-dev.db
-
-# Environment & secrets
-.env
-.env.*
-
-# Build artifacts
-dist/
-build/
-
-# OS/editor
-.DS_Store
-Thumbs.db
-.vscode/
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*
