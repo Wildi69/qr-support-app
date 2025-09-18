@@ -1,0 +1,8 @@
+﻿fastapi
+uvicorn[standard]
+SQLAlchemy>=2.0
+alembic
+jinja2
+python-multipart
+python-dotenv
+itsdangerous
