@@ -26,6 +26,8 @@ from app.utils import rate_limit, flash
 
 # --- Templates ---
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["csrf_token"] = csrf_utils.get_csrf_from_request
+
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -190,6 +192,7 @@ async def post_login(
     # Success → clear limiter and issue session
     rate_limit.record_success(ip)
     cookie_val = sess.issue_session(admin_id=username)
+
     resp = RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
     resp.set_cookie(value=cookie_val, **sess.cookie_params())
 
@@ -218,16 +221,20 @@ async def post_logout(request: Request) -> Response:
     return resp
 
 
-@router.get("")
-def admin_home(request: Request, payload: Dict[str, Any] = Depends(require_admin)) -> Response:
+# ---------------------------
+# Dashboard (protected)
+# ---------------------------
+@router.get("", name="admin_dashboard")
+def admin_dashboard(request: Request, payload: Dict[str, Any] = Depends(require_admin)) -> Response:
     """
-    Minimal landing page so redirects have a valid target.
+    Admin landing page (dashboard). Requires a valid admin session.
     """
     response = templates.TemplateResponse(
-        "admin/base.html",
+        "admin/dashboard.html",
         {
             "request": request,
             "title": "Admin Dashboard",
+            "admin_user": settings.ADMIN_USER,
             "payload": payload,
             "messages": [],  # filled after consume()
         },

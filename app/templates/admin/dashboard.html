@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+  <h1 class="text-2xl font-semibold mb-4">Admin Dashboard</h1>
+  <p>Welcome, {{ payload.get('admin_id', admin_user) }}.</p>
+
+  <form method="post" action="/admin/logout" class="mt-6">
+    <input type="hidden" name="_csrf" value="{{ csrf_token(request) }}">
+    <button type="submit">Log out</button>
+  </form>
+{% endblock %}
