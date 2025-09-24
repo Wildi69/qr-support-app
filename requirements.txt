@@ -6,4 +6,5 @@ jinja2
 python-multipart
 python-dotenv
 itsdangerous
- bcrypt
+bcrypt
+qrcode[pil]>=7.4
