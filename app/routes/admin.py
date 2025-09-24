@@ -6,6 +6,10 @@ import hmac
 import hashlib
 import secrets
 import time
+import io
+import base64
+import re
+import qrcode
 
 from fastapi import (
     APIRouter,
@@ -19,6 +23,7 @@ from fastapi import (
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.utils.urls import build_public_form_url
 from app.utils import settings
 from app.utils import session as sess
 from app.utils import csrf as csrf_utils
@@ -27,7 +32,6 @@ from app.utils import rate_limit, flash
 # --- Templates ---
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["csrf_token"] = csrf_utils.get_csrf_from_request
-
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -242,3 +246,122 @@ def admin_dashboard(request: Request, payload: Dict[str, Any] = Depends(require_
     msgs = flash.consume(request, response)
     response.context.update({"messages": msgs})
     return response
+
+
+# ---------------------------
+# QR Generator (protected)
+# ---------------------------
+@router.get("/qr", name="admin_qr_form")
+def admin_qr_form(request: Request, payload: Dict[str, Any] = Depends(require_admin)) -> Response:
+    """
+    Render the QR Generator form.
+    """
+    response = templates.TemplateResponse(
+        "admin/qr_generator.html",
+        {
+            "request": request,
+            "title": "QR Generator",
+            "payload": payload,
+            "messages": [],
+        },
+    )
+    msgs = flash.consume(request, response)
+    response.context.update({"messages": msgs})
+    _audit_safe(request, "admin.qr.view")
+    return response
+
+
+@router.post("/qr", name="admin_qr_submit")
+async def admin_qr_submit(
+    request: Request,
+    machine_type: str = Form(...),
+    serial: str = Form(...),
+    csrf_token: str = Form(..., alias="_csrf"),
+    payload: Dict[str, Any] = Depends(require_admin),
+) -> Response:
+    """
+    Validate CSRF + inputs, then build the public URL + QR PNG (base64) and
+    re-render the form showing both.
+    """
+    # CSRF
+    try:
+        csrf_utils.require_csrf(request, csrf_token)
+    except Exception:
+        resp = templates.TemplateResponse(
+            "admin/qr_generator.html",
+            {
+                "request": request,
+                "title": "QR Generator",
+                "payload": payload,
+                "messages": [{"level": "error", "code": "invalid_request"}],
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+        return resp
+
+    # Basic normalization/validation (MVP)
+    mt = (machine_type or "").strip()
+    sn = (serial or "").strip()
+    if not mt or not sn:
+        return templates.TemplateResponse(
+            "admin/qr_generator.html",
+            {
+                "request": request,
+                "title": "QR Generator",
+                "payload": payload,
+                "messages": [{"level": "error", "code": "missing_fields"}],
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if len(mt) > 64 or len(sn) > 64:
+        return templates.TemplateResponse(
+            "admin/qr_generator.html",
+            {
+                "request": request,
+                "title": "QR Generator",
+                "payload": payload,
+                "messages": [{"level": "error", "code": "input_too_long"}],
+            },
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    # Build absolute public URL to prefill the public form
+    lang = request.query_params.get("lang")
+    public_url = build_public_form_url(request, mt, sn, lang)
+
+    # Generate QR PNG in-memory and base64-encode it
+    qr = qrcode.QRCode(
+        version=None,  # automatic
+        error_correction=qrcode.constants.ERROR_CORRECT_M,  # medium (~15% recovery)
+        box_size=10,  # pixel size of each "box"
+        border=2,     # quiet zone (2-4 typical)
+    )
+    qr.add_data(public_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    qr_png_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+
+    # Build a safe download filename, e.g., MTC-45_1234.png
+    def _slug(s: str) -> str:
+        return re.sub(r"[^A-Za-z0-9._-]+", "_", (s or "").strip()).strip("_")
+
+    download_filename = f"{_slug(mt)}_{_slug(sn)}.png"
+
+    _audit_safe(request, "admin.qr.generated", note=f"machine_type={mt}, serial={sn}")
+
+    return templates.TemplateResponse(
+        "admin/qr_generator.html",
+        {
+            "request": request,
+            "title": "QR Generator",
+            "payload": payload,
+            "public_url": public_url,
+            "qr_png_b64": qr_png_b64,
+            "machine_type": mt,
+            "serial": sn,
+            "download_filename": download_filename,
+            "messages": [{"level": "success", "code": "qr_generated"}],
+        },
+    )

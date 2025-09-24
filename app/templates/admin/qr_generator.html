@@ -1,0 +1,66 @@
+{# app/templates/admin/qr_generator.html #}
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <h2 style="margin-top:0">{{ tr('qr_title') }}</h2>
+  <p class="muted" style="margin-top:.25rem">
+    {{ tr('qr_intro') }}
+  </p>
+
+  <form method="post" action="/admin/qr" class="space-y-4" style="margin-top:1rem">
+    <!-- CSRF -->
+    <input type="hidden" name="_csrf" value="{{ csrf_token(request) }}"/>
+
+    <label for="machine_type">{{ tr('qr_machine_type') }}</label>
+    <input id="machine_type" name="machine_type" type="text" required
+           placeholder="{{ tr('qr_ph_machine_type') }}" />
+
+    <label for="serial">{{ tr('qr_serial') }}</label>
+    <input id="serial" name="serial" type="text" required
+           placeholder="{{ tr('qr_ph_serial') }}" />
+
+    <button type="submit" class="btn">{{ tr('qr_generate') }}</button>
+  </form>
+
+  {% if public_url %}
+    <hr style="margin:1.25rem 0;border-color:#1f2937"/>
+    <div style="display:grid;gap:1rem;align-items:start">
+      <div>
+        <h3 style="margin:0 0 .5rem 0">{{ tr('qr_title') }} — Link</h3>
+        <p class="muted" style="margin:.25rem 0">
+          {{ 'Copy this link' if lang_code == 'en' else 'Copiez ce lien' }}
+        </p>
+        <input type="text" readonly value="{{ public_url }}"
+               style="width:100%;padding:.7rem 1rem;border-radius:10px;border:1px solid #2a2f3a;background:#0c1424;color:var(--ink)"/>
+      </div>
+
+      {% if qr_png_b64 %}
+        <div>
+          <h3 style="margin:1rem 0 .5rem 0">{{ tr('qr_title') }} — Preview</h3>
+          <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+            <img
+              src="data:image/png;base64,{{ qr_png_b64 }}"
+              alt="QR code"
+              style="width:256px;height:256px;border-radius:8px;background:#fff;padding:8px"
+            />
+            <div>
+              {# Build a clean filename: machineType_serial.png #}
+              {% set mt = machine_type|replace(" ", "_") %}
+              {% set sn = serial|replace(" ", "_") %}
+              <a
+                href="data:image/png;base64,{{ qr_png_b64 }}"
+                download="{{ mt }}_{{ sn }}.png"
+                class="btn"
+              >
+                {{ 'Download PNG' if lang_code == 'en' else 'Télécharger PNG' }}
+              </a>
+              <p class="muted" style="margin-top:.5rem">
+                {{ 'Tip: Right-click image to save as well.' if lang_code == 'en' else "Astuce : clic droit sur l'image pour l’enregistrer." }}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

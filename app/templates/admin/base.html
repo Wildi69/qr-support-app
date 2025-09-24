@@ -9,7 +9,17 @@
     'signin': 'Sign in',
     'email': 'Email',
     'password': 'Password',
-    'button_signin': 'Sign in'
+    'button_signin': 'Sign in',
+    'dashboard': 'Dashboard',
+    'qr_generator': 'QR Generator',
+
+    'qr_title': 'QR Generator',
+    'qr_intro': 'Enter the machine info, then submit to generate a QR code and link.',
+    'qr_machine_type': 'Machine Type',
+    'qr_serial': 'Serial Number',
+    'qr_ph_machine_type': 'e.g., MTC-45',
+    'qr_ph_serial': 'e.g., SN-12345',
+    'qr_generate': 'Generate'
   },
   'fr': {
     'app_title': 'Support QR App',
@@ -17,7 +27,17 @@
     'signin': 'Se connecter',
     'email': 'Courriel',
     'password': 'Mot de passe',
-    'button_signin': 'Se connecter'
+    'button_signin': 'Se connecter',
+    'dashboard': 'Tableau de bord',
+    'qr_generator': 'Générateur de QR',
+
+    'qr_title': 'Générateur de QR',
+    'qr_intro': 'Entrez les informations de la machine, puis soumettez pour générer un code QR et un lien.',
+    'qr_machine_type': 'Type de machine',
+    'qr_serial': 'Numéro de série',
+    'qr_ph_machine_type': 'p. ex., MTC-45',
+    'qr_ph_serial': 'p. ex., SN-12345',
+    'qr_generate': 'Générer'
   }
 } %}
 {% macro tr(key) -%}{{ L[lang_code].get(key, key) }}{%- endmacro %}
@@ -63,10 +83,23 @@
       display:inline-block;margin-top:1rem;padding:.8rem 1.2rem;border:0;border-radius:12px;
       background:var(--accent);color:#021018;font-weight:700;cursor:pointer
     }
+
+    /* Admin navbar */
+    .nav{display:flex;gap:.5rem;flex-wrap:wrap;padding:0 1rem 1rem}
+    .nav a{
+      display:inline-block;padding:.5rem .8rem;border-radius:10px;border:1px solid #1f2937;
+      color:var(--ink);background:#0c1424;
+    }
+    .nav a:hover{background:#0b1b2e}
+    .nav a.active{background:#0b2338;box-shadow:0 0 0 2px rgba(58,168,255,.25) inset}
   </style>
   {% block page_styles %}{% endblock %}
 </head>
 <body>
+  {% set _path = request.url.path %}
+  {% set is_dashboard = (_path == '/admin' or _path == '/admin/') %}
+  {% set is_qr = _path.startswith('/admin/qr') %}
+
   <header>
     <div class="container row">
       <div><strong>{{ tr('app_title') }}</strong></div>
@@ -75,6 +108,20 @@
         <a href="{{ request.url.path }}?lang=en">EN</a> |
         <a href="{{ request.url.path }}?lang=fr">FR</a>
       </div>
+    </div>
+    <div class="container">
+      <nav class="nav" aria-label="Admin navigation">
+        <a href="/admin"
+           class="{{ 'active' if is_dashboard else '' }}"
+           aria-current="{{ 'page' if is_dashboard else 'false' }}">
+          {{ tr('dashboard') }}
+        </a>
+        <a href="/admin/qr"
+           class="{{ 'active' if is_qr else '' }}"
+           aria-current="{{ 'page' if is_qr else 'false' }}">
+          {{ tr('qr_generator') }}
+        </a>
+      </nav>
     </div>
   </header>
 
