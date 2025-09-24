@@ -20,8 +20,16 @@ def ping():
 
 @public_router.get("/form")
 def show_form(request: Request):
-    # Render empty form (messages list optional)
-    return templates.TemplateResponse("form.html", {"request": request, "messages": []})
+    qs = request.query_params
+    return templates.TemplateResponse(
+        "form.html",
+        {
+            "request": request,
+            "messages": [],
+            "machine_serial": qs.get("machine_serial", ""),
+            "machine_type": qs.get("machine_type", ""),
+        },
+    )
 
 
 @public_router.post("/form")

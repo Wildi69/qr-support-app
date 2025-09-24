@@ -53,7 +53,7 @@ def _env(name: str, default: str | None = None, *, required: bool = False) -> st
 
 # --- Application settings ---
 ADMIN_USER: str = _env("ADMIN_USER", required=True)
-ADMIN_PASS: str = _env("ADMIN_PASS", required=True)
+ADMIN_PASS_HASH: str = _env("ADMIN_PASS_HASH", required=True)
 SECRET_KEY: str = _env("SECRET_KEY", required=True)
 
 # Database
@@ -69,3 +69,4 @@ COOKIE_SAMESITE: str = _env("COOKIE_SAMESITE", "lax")
 SESSION_SECRET: str = _env("SESSION_SECRET", SECRET_KEY)  # fallback to SECRET_KEY
 SESSION_COOKIE_NAME: str = _env("SESSION_COOKIE_NAME", "qr_session")
 FLASH_COOKIE_NAME: str = _env("FLASH_COOKIE_NAME", "qr_flash")
+SESSION_MAX_AGE_MIN: int = int(_env("SESSION_MAX_AGE_MIN", "60"))
