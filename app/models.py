@@ -105,6 +105,11 @@ class EmailLog(Base):
 
     status: Mapped[EmailStatus] = mapped_column(Enum(EmailStatus), default=EmailStatus.queued, nullable=False)
 
+    # Observability fields (added by migration 40337e53cf25)
+    provider_message_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    payload_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
     # Relationships
