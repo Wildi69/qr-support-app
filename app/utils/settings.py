@@ -70,3 +70,12 @@ SESSION_SECRET: str = _env("SESSION_SECRET", SECRET_KEY)  # fallback to SECRET_K
 SESSION_COOKIE_NAME: str = _env("SESSION_COOKIE_NAME", "qr_session")
 FLASH_COOKIE_NAME: str = _env("FLASH_COOKIE_NAME", "qr_flash")
 SESSION_MAX_AGE_MIN: int = int(_env("SESSION_MAX_AGE_MIN", "60"))
+
+# --- Email (Phase 5) ---
+EMAIL_ENABLED: bool = _env("EMAIL_ENABLED", "false").lower() in {"1", "true", "yes", "y"}
+SMTP_HOST: str = _env("SMTP_HOST", "")
+SMTP_PORT: int = int(_env("SMTP_PORT", "587"))
+SMTP_USER: str = _env("SMTP_USER", "")
+SMTP_PASS: str = _env("SMTP_PASS", "")
+SMTP_STARTTLS: bool = _env("SMTP_STARTTLS", "true").lower() in {"1", "true", "yes", "y"}
+MAIL_FROM: str = _env("MAIL_FROM", "Support <support@example.com>")

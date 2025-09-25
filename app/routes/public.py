@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app import models
+from app.utils.emailer import send_support_email  # <-- added
 
 public_router = APIRouter(tags=["public"])
 
@@ -132,6 +133,61 @@ def submit_form(
     db.add(audit)
 
     db.commit()
+
+    # --- Email: render + send + log (non-blocking for UX) ---
+    try:
+        email_context = {
+            "machine_type": machine_type.strip(),
+            "machine_serial": machine_serial.strip(),
+            "operator_name": operator_name.strip(),
+            "operator_phone": operator_phone.strip(),
+            "issue_summary": summary.strip(),
+        }
+        to_addr = "tyson.smith@epiqmachinery.com"
+
+        # Send (SMTP or .eml fallback per settings)
+        email_result = send_support_email(to_addr=to_addr, context=email_context)
+
+        # Persist email_log
+        email_log = models.EmailLog(
+            ticket_id=ticket.id,
+            to_addr=to_addr,
+            subject=email_result.get("subject", ""),
+            body=email_result.get("text", ""),  # store plain text for easy searching
+            status=(
+                models.EmailStatus.sent
+                if email_result.get("status") == "sent"
+                else models.EmailStatus.failed
+            ),
+        )
+        # Optional observability fields (added by migration)
+        setattr(email_log, "provider_message_id", email_result.get("provider_message_id"))
+        setattr(email_log, "error", email_result.get("error"))
+        setattr(email_log, "payload_hash", email_result.get("payload_hash"))
+
+        db.add(email_log)
+
+        # Audit event for email send outcome
+        audit_email = models.AuditEvent(
+            actor="public:operator",
+            action="email.send.success" if email_result.get("status") == "sent" else "email.send.failure",
+            entity_type="ticket",
+            entity_id=ticket.id,
+            meta={
+                "to": to_addr,
+                "subject": email_result.get("subject"),
+                "status": email_result.get("status"),
+                "error": email_result.get("error"),
+            },
+        )
+        db.add(audit_email)
+
+        db.commit()
+    except Exception:
+        # Do not leak errors to user; keep UI success.
+        db.rollback()
+        # Optional: could add a minimal audit here if desired.
+        pass
 
     # --- Success response ---
     messages.append(
